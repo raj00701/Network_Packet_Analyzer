@@ -1,4 +1,4 @@
-# PRODIGY_CS_07
+# PRODIGY_CS_07_Network_Packet_Analyzer
 A network packet analyser (or packet sniffer) is a software program or hardware device that captures, decodes, and inspects traffic passing over a network, acting like a digital voltmeter for network data. It captures packets, breaks down their contents (source/destination IPs, ports, protocol) and logs them, allowing for network troubleshooting, security monitoring, and capacity planning.
 
 
