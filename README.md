@@ -21,9 +21,3 @@ Usage:
 
 
 
-Install:
-sudo apt update
-sudo apt install python3-scapy
-python3 -m pip install scapy
-python3 -m venv venv
-source venv/bin/activate
