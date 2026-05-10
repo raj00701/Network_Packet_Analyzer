@@ -1,0 +1,92 @@
+import sys
+from scapy.all import sniff, IP, TCP, UDP, ICMP, Raw, DNS, DNSQR, get_if_list
+
+# ---------------- Packet Processor ---------------- #
+def process_packet(packet):
+    print("=" * 60)
+
+# -------- IP Layer -------- #
+    if not packet.haslayer(IP):
+        return
+
+    ip = packet[IP]
+    print(f"[+] Source IP      : {ip.src}")
+    print(f"[+] Destination IP : {ip.dst}")
+    print(f"[+] Protocol Num   : {ip.proto}")
+
+# -------- DNS -------- #
+    if packet.haslayer(DNS) and packet.haslayer(DNSQR):
+        try:
+            query = packet[DNSQR].qname.decode(errors="ignore")
+            print("[+] Protocol Name : DNS")
+            print(f"[+] Query Domain  : {query}")
+        except:
+            pass
+        return
+
+# -------- TCP -------- #
+    if packet.haslayer(TCP):
+        tcp = packet[TCP]
+        print("[+] Protocol Name : TCP")
+        print(f"[+] Source Port   : {tcp.sport}")
+        print(f"[+] Dest Port     : {tcp.dport}")
+# ---- HTTP ---- #
+        if tcp.dport == 80 or tcp.sport == 80:
+            print("[+] Application   : HTTP")
+
+            if packet.haslayer(Raw):
+                try:
+                    data = packet[Raw].load.decode(errors="ignore")
+
+                    if data.startswith(("GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS")):
+                        lines = data.split("\r\n")
+
+                        print(f"[+] Request Line : {lines[0]}")
+                        print("[+] Headers:")
+
+                        for line in lines[1:]:
+                            if line == "":
+                                break
+                            print(f"    {line}")
+
+                except:
+                    pass
+
+# ---- HTTPS ---- #
+        elif tcp.dport == 443 or tcp.sport == 443:
+            print("[+] Application   : HTTPS (Encrypted)")
+
+# -------- UDP -------- #
+    elif packet.haslayer(UDP):
+        udp = packet[UDP]
+        print("[+] Protocol Name : UDP")
+        print(f"[+] Source Port   : {udp.sport}")
+        print(f"[+] Dest Port     : {udp.dport}")
+
+        if udp.dport == 53 or udp.sport == 53:
+            print("[+] Application   : DNS")
+
+# -------- ICMP -------- #
+    elif packet.haslayer(ICMP):
+        print("[+] Protocol Name : ICMP")
+
+# -------- Payload -------- #
+    if packet.haslayer(Raw):
+        payload = packet[Raw].load
+        print(f"[+] Payload (first 50B): {payload[:50]}")
+
+# ---------------- Sniffer ---------------- #
+def start_sniffing(interface):
+    print(f"[*] Sniffing on {interface}...\n")
+
+    sniff(
+        intface=interface,
+        pros=process_packet,
+        store=False,
+        filter="tcp port 80 or tcp port 443 or udp port 53 or tcp port 53"
+    )
+# ---------------- Main ---------------- #
+if __name__ == "__main__":
+    print("Available interfaces:", get_if_list())
+    interface = input("Enter network interface (Wi-Fi, Ethernet, eth0, wlan0): ")
+    start_sniffing(interface)
